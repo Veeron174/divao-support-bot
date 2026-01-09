@@ -12,9 +12,7 @@
     "author":  "",
     "license":  "ISC",
     "dependencies":  {
-                         "@maxhub/max-bot-api":  "^0.2.1",
-                         "dotenv":  "^17.2.3"
+                         "@maxhub/max-bot-api":  "^0.2.1"
                      },
     "type":  "module"
 }
-
