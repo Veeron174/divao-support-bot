@@ -1,99 +1,210 @@
 ﻿import { Bot } from '@maxhub/max-bot-api';
-import dotenv from 'dotenv';
 
-// Принудительное логирование ДО dotenv
-console.log('=== START DEBUG ===');
-console.log('1. Env keys before dotenv:', Object.keys(process.env).join(', '));
+// ДЕБАГ: Все переменные окружения
+console.log('=== BOTHOST ENVIRONMENT ===');
+const allVars = Object.keys(process.env);
+console.log('Total env vars:', allVars.length);
 
-dotenv.config();
+// Ищем токен
+const tokenKeys = ['BOT_TOKEN', 'MAX_BOT_TOKEN', 'API_TOKEN', 'TOKEN', 'TELEGRAM_BOT_TOKEN', 'MAX_TOKEN'];
+let foundToken = null;
+let foundKey = null;
 
-// Принудительное логирование ПОСЛЕ dotenv  
-console.log('=== AFTER DOTENV ===');
-console.log('2. BOT_TOKEN exists:', !!process.env.BOT_TOKEN);
-console.log('3. BOT_TOKEN length:', process.env.BOT_TOKEN?.length);
-console.log('4. BOT_TOKEN first 20 chars:', process.env.BOT_TOKEN?.substring(0, 20));
-console.log('5. All env vars with BOT:', Object.keys(process.env).filter(key => key.includes('BOT') || key.includes('TOKEN')).join(', '));
+for (const key of tokenKeys) {
+  if (process.env[key]) {
+    foundToken = process.env[key];
+    foundKey = key;
+    console.log(`✅ Found token in ${key}: ${foundToken.substring(0, 15)}... (length: ${foundToken.length})`);
+    break;
+  }
+}
 
-const bot = new Bot(process.env.MAX_BOT_TOKEN || process.env.BOT_TOKEN || process.env.API_TOKEN || process.env.TOKEN);
-console.log('6. Bot created successfully');
+if (!foundToken) {
+  console.error('❌ NO BOT TOKEN FOUND!');
+  console.error('Available env vars:', allVars.join(', '));
+  process.exit(1);
+}
 
-const responses = {
-  greeting: `Добрый день! Спасибо за обращение в службу поддержки DIVAO.
+console.log(`✅ Using token from ${foundKey}`);
+
+// СОЗДАЕМ БОТА
+const bot = new Bot(foundToken);
+console.log('✅ Bot instance created');
+
+// БАЗА ЗНАНИЙ АВТООТВЕТОВ DIVAO
+const autoResponses = {
+  // Приветствие (основное)
+  greeting: `Добрый день! 👋
+Спасибо за обращение в службу поддержки DIVAO.
 
 Пожалуйста, пришлите скрин заказа и подробно (а лучше с видео или фото) напишите о цели обращения.
-- мы поможем Вам настроить ноутбук
-- установим дополнительные программы
-- оперативно решим все вопросы
+- мы поможем Вам настроить ноутбук и установить дополнительные программы
+- оперативно решим все вопросы, связанные с нашей техникой.
+
+Наши специалисты уже спешат на помощь! ⚡
 
 ⏰ График работы: пн-пт 10:00 до 19:00`,
 
-  feedback: `Здравствуйте! Большое спасибо за отзыв.
+  // Автоответ №1 - Отзыв и доставка мышки
+  feedback: `Здравствуйте! 🙏
+Большое спасибо за отзыв. Будем очень благодарны, если дополните его примером использования с фото или видео.
 
-Мышку отправляем яндекс доставкой.
-Для оформления доставки напишите адрес и телефон получателя.`,
+📦 Мышку отправляем яндекс доставкой.
+Для оформления доставки (куда, контакты) напишите, пожалуйста нам адрес и тел получателя`,
 
-  activation: `К сожалению, сейчас происходят сбои с активацией Windows.
+  // Автоответ №2 - Активация Windows
+  activation: `К сожалению, сейчас происходят сбои с активацией предустановленной Windows 😔
 
-Подготовили файл для активации и инструкцию:
+📎 Подготовили для Вас файл для активации и инструкцию. Скачать по ссылке:
 https://divao.ru/activation-guide
 
-📞 Если не работает: +79952205567`,
+📞 Если ссылка не работает: +79952205567`,
 
-  performance: `В первые дни возможны:
-• Нагрев
-• Шум вентилятора
-• Быстрая разрядка
-
-Это нормально - идут обновления.
+  // Автоответ №3 - Проблемы с производительностью
+  performance: `Так как Вы только начали использовать ноутбук, то в первые дни возможны повышенная нагрузка на аккумулятор, нагрев, шум вентилятора. Это связано со скачиванием и установкой обновлений.
 
 ✅ Рекомендации:
-1. Подключите к сети на 4-6 часов
-2. Не прерывайте обновления
-3. Проверьте через 2-3 дня`
+1. Подключите ноутбук к сети на 4–6 часов для завершения процессов
+2. Не прерывайте обновления — даже если кажется, что система «зависла»
+3. Проверьте состояние через 2–3 дня — обычно к этому времени фоновая активность полностью прекращается
+
+📞 Дополнительная помощь: +79952205567`,
+
+  // Доставка
+  delivery: `🚚 Информация по доставке DIVAO:
+• Доставка Яндекс/СДЭК 1-3 дня
+• Самовывоз из пунктов выдачи
+• Курьерская доставка до двери
+
+Для уточнения деталей отправьте:
+1. Номер заказа
+2. Город доставки
+3. Контактный телефон
+
+📞 +79952205567`,
+
+  // Гарантия
+  warranty: `🔧 Гарантийное обслуживание DIVAO:
+• Гарантия 12 месяцев
+• Бесплатный ремонт при заводском браке
+• Диагностика в течение 3 дней
+
+Для обращения пришлите:
+1. Видео/фото проблемы
+2. Серийный номер
+3. Чек о покупке
+
+📞 +79952205567`
 };
 
+// КОМАНДА /start
 bot.command('start', async (ctx) => {
-  await ctx.reply(responses.greeting);
+  console.log(`User ${ctx.user()?.name} started bot`);
+  await ctx.reply(autoResponses.greeting);
 });
 
+// КОМАНДА /help
 bot.command('help', async (ctx) => {
-  await ctx.reply(`Доступные команды:
-/start - начать
-/activation - активация Windows
-/performance - проблемы с ноутбуком
-/contact - контакты`);
+  const helpText = `📋 Поддержка DIVAI - Доступные команды:
+
+/start - Начать диалог
+/help - Эта справка
+/activation - Проблемы с активацией Windows
+/performance - Ноутбук тормозит/греется
+/delivery - Вопросы по доставке
+/warranty - Гарантия и ремонт
+/contact - Контакты поддержки
+
+📞 Телефон: +79952205567
+⏰ График: пн-пт 10:00 до 19:00`;
+  
+  await ctx.reply(helpText);
 });
 
+// БЫСТРЫЕ КОМАНДЫ
 bot.command('activation', async (ctx) => {
-  await ctx.reply(responses.activation);
+  await ctx.reply(autoResponses.activation);
 });
 
 bot.command('performance', async (ctx) => {
-  await ctx.reply(responses.performance);
+  await ctx.reply(autoResponses.performance);
+});
+
+bot.command('delivery', async (ctx) => {
+  await ctx.reply(autoResponses.delivery);
+});
+
+bot.command('warranty', async (ctx) => {
+  await ctx.reply(autoResponses.warranty);
 });
 
 bot.command('contact', async (ctx) => {
-  await ctx.reply('📞 +79952205567 (пн-пт 10:00-19:00)');
+  await ctx.reply(`📞 Контакты поддержки DIVAO:
+  
+Телефон: +79952205567
+График: пн-пт 10:00-19:00
+Email: support@divao.ru
+Сайт: https://divao.ru`);
 });
 
+// АВТООТВЕТЫ НА СООБЩЕНИЯ
 bot.on('message_created', async (ctx) => {
-  const text = ctx.message?.body?.text || '';
+  const message = ctx.message?.body?.text || '';
+  const user = ctx.user();
   
-  if (text.includes('отзыв') || text.includes('мыш')) {
-    await ctx.reply(responses.feedback);
-  } else if (text.includes('активация') || text.includes('windows')) {
-    await ctx.reply(responses.activation);
-  } else if (text.includes('греется') || text.includes('тормозит') || text.includes('шум')) {
-    await ctx.reply(responses.performance);
-  } else if (text && !text.startsWith('/')) {
-    await ctx.reply(responses.greeting);
+  // Пропускаем команды
+  if (!message || message.startsWith('/')) return;
+  
+  console.log(`Message from ${user?.name}: ${message.substring(0, 50)}`);
+  
+  // Определяем категорию
+  const lowerMsg = message.toLowerCase();
+  
+  if (lowerMsg.includes('отзыв') || lowerMsg.includes('мыш') || lowerMsg.includes('подарок')) {
+    await ctx.reply(autoResponses.feedback);
+  } else if (lowerMsg.includes('активация') || lowerMsg.includes('windows') || lowerMsg.includes('win11')) {
+    await ctx.reply(autoResponses.activation);
+  } else if (lowerMsg.includes('медленно') || lowerMsg.includes('тормозит') || lowerMsg.includes('греется') || 
+             lowerMsg.includes('шум') || lowerMsg.includes('вентилятор') || lowerMsg.includes('батарея')) {
+    await ctx.reply(autoResponses.performance);
+  } else if (lowerMsg.includes('доставк') || lowerMsg.includes('приедет') || lowerMsg.includes('трек')) {
+    await ctx.reply(autoResponses.delivery);
+  } else if (lowerMsg.includes('гарантия') || lowerMsg.includes('ремонт') || lowerMsg.includes('брак')) {
+    await ctx.reply(autoResponses.warranty);
+  } else {
+    // Любое другое сообщение
+    await ctx.reply(autoResponses.greeting);
   }
 });
 
-console.log('7. Starting bot...');
-bot.start().then(() => {
-  console.log('✅ Бот запущен успешно!');
-}).catch(error => {
-  console.error('❌ Ошибка запуска:', error.message);
-  console.error('Stack:', error.stack);
+// ОБРАБОТКА МЕДИАФАЙЛОВ
+bot.on('message_created', async (ctx) => {
+  if (ctx.message?.body?.attachments?.length > 0) {
+    await ctx.reply(`✅ Получили ваш файл! Спасибо за подробности.
+
+Специалист ознакомится и ответит в ближайшее время.
+⏳ Обычно ответ занимает 10-15 минут в рабочее время.`);
+  }
 });
+
+// ЗАПУСК БОТА
+console.log('🚀 Starting DIVAO Support Bot for MAX...');
+bot.start()
+  .then(() => {
+    console.log('✅ DIVAO BOT STARTED SUCCESSFULLY!');
+    console.log('📞 Support phone: +79952205567');
+    console.log('⏰ Working hours: Mon-Fri 10:00-19:00');
+    console.log('🔗 Bot link: https://max.ru/id232103141393_1_bot');
+  })
+  .catch(error => {
+    console.error('❌ BOT START ERROR:');
+    console.error('Message:', error.message);
+    console.error('Stack:', error.stack);
+    
+    // Дополнительная диагностика
+    if (error.message.includes('token')) {
+      console.error('⚠️ Token problem detected');
+      console.error('Token used:', foundToken?.substring(0, 20) + '...');
+      console.error('Token length:', foundToken?.length);
+    }
+  });
