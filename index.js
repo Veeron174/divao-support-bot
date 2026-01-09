@@ -8,7 +8,7 @@ if (!process.env.BOT_TOKEN) {
   process.exit(1);
 }
 
-const bot = new Bot(process.env.BOT_TOKEN);
+const bot = new Bot(process.env.MAX_BOT_TOKEN || process.env.BOT_TOKEN);
 
 const responses = {
   greeting: `Добрый день! Спасибо за обращение в службу поддержки DIVAO.
