@@ -1,14 +1,21 @@
 ﻿import { Bot } from '@maxhub/max-bot-api';
 import dotenv from 'dotenv';
 
+// Принудительное логирование ДО dotenv
+console.log('=== START DEBUG ===');
+console.log('1. Env keys before dotenv:', Object.keys(process.env).join(', '));
+
 dotenv.config();
 
-console.log('=== ДЕБАГ ИНФО ===');
-console.log('BOT_TOKEN длина:', process.env.BOT_TOKEN?.length);
-console.log('MAX_BOT_TOKEN длина:', process.env.MAX_BOT_TOKEN?.length);
-console.log('Токен первые 10 символов:', process.env.BOT_TOKEN?.substring(0, 10) + '...');
+// Принудительное логирование ПОСЛЕ dotenv  
+console.log('=== AFTER DOTENV ===');
+console.log('2. BOT_TOKEN exists:', !!process.env.BOT_TOKEN);
+console.log('3. BOT_TOKEN length:', process.env.BOT_TOKEN?.length);
+console.log('4. BOT_TOKEN first 20 chars:', process.env.BOT_TOKEN?.substring(0, 20));
+console.log('5. All env vars with BOT:', Object.keys(process.env).filter(key => key.includes('BOT') || key.includes('TOKEN')).join(', '));
 
-const bot = new Bot(process.env.MAX_BOT_TOKEN || process.env.BOT_TOKEN);
+const bot = new Bot(process.env.MAX_BOT_TOKEN || process.env.BOT_TOKEN || process.env.API_TOKEN || process.env.TOKEN);
+console.log('6. Bot created successfully');
 
 const responses = {
   greeting: `Добрый день! Спасибо за обращение в службу поддержки DIVAO.
@@ -83,8 +90,10 @@ bot.on('message_created', async (ctx) => {
   }
 });
 
+console.log('7. Starting bot...');
 bot.start().then(() => {
-  console.log('✅ Бот запущен');
+  console.log('✅ Бот запущен успешно!');
 }).catch(error => {
   console.error('❌ Ошибка запуска:', error.message);
+  console.error('Stack:', error.stack);
 });
